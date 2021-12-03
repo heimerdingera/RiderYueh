@@ -1,0 +1,109 @@
+//下載Google Sheet
+public static class CSVDownloader
+{
+    private const string k_googleSheetDocID = "XXXXXXXXXXXXXXXXXXXXXXXXX";
+
+    private const string url = "https://docs.google.com/spreadsheets/d/" + k_googleSheetDocID + "/export?format=csv";
+
+    internal static IEnumerator DownloadData(System.Action<string> onCompleted)
+    {
+        yield return new WaitForEndOfFrame();
+
+        string downloadData = null;
+        using (UnityWebRequest webRequest = UnityWebRequest.Get(url))
+        {
+            Debug.Log("Starting Download...");
+            yield return webRequest.SendWebRequest();
+
+            if (webRequest.isNetworkError)
+            {
+                Debug.Log("...Download Error: " + webRequest.error);
+            }
+            else
+            {
+                downloadData = webRequest.downloadHandler.text;
+            }
+        }
+
+        onCompleted(downloadData);
+    }
+}
+
+//簡單解成想要的格式
+public class GoogleSheetLoader : MonoBehaviour
+{
+    public void Load()
+    {
+        StartCoroutine(CSVDownloader.DownloadData(AfterDownload));
+    }
+
+    public void AfterDownload(string data)
+    {
+        if (null == data)
+        {
+            Debug.LogError("Load Fail");
+        }
+        else
+        {
+            Debug.Log("===============Done!!============");
+            StartCoroutine(ProcessData(data, AfterProcessData));
+        }
+    }
+
+    private void AfterProcessData(string errorMessage)
+    {
+        Debug.Log("Process Data Done!!");
+    }
+
+    public IEnumerator ProcessData(string data, System.Action<string> onCompleted)
+    {
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+
+        //移除r n，●用來判斷換行
+        string[] arr = data.Replace("\r\n", "●,").Split(',');
+
+        //根據每一行存入整條string
+        Dictionary<int, List<string>> dict_temp = new Dictionary<int, List<string>>();
+
+        int lineNow = 0;
+        List<string> list_temp = new List<string>();
+        foreach (string str in arr)
+        {
+            if (str.Contains("●"))
+            {
+                list_temp.Add(str.Replace("●", string.Empty));
+                dict_temp.Add(lineNow, new List<string>(list_temp));
+                list_temp.Clear();
+                lineNow += 1;
+            }
+            else
+            {
+                list_temp.Add(str);
+            }
+        }
+
+        
+        Dictionary<string, List<List<string>>> dict_aaa = new Dictionary<string, List<List<string>>>();
+        List<List<string>> list_bbb = new List<List<string>>();
+
+        foreach (int tempKey in dict_temp.Keys)
+        {
+            List<string> list_ccc = new List<string>(dict_temp[tempKey]);
+            list_ccc.RemoveAt(0);
+            if (dict_aaa.ContainsKey(dict_temp[tempKey][0]))
+            {
+                list_bbb.Add(list_ccc);
+                dict_aaa[dict_temp[tempKey][0]] = new List<List<string>>(list_bbb);
+            }
+            else
+            {
+                list_bbb.Clear();
+                list_bbb.Add(list_ccc);
+                dict_aaa.Add(dict_temp[tempKey][0], new List<List<string>>(list_bbb));
+            }
+        }
+        Debug.Log("Final Data : " + dict_aaa);
+    }
+}
