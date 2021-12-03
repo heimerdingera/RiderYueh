@@ -1,0 +1,48 @@
+//讀取某個字串Dictionary 並回傳Class List
+  public List<Item> OnLoadItemList()
+  {
+      List<Item> result = new List<Item>();
+
+      string tempString = LoadPlayerPrefsByKey("ItemList");
+
+      var tempObject = (Dictionary<string, object>)MiniJSON.Json.Deserialize(tempString);
+      var tempList = tempObject["Data"] as List<object>;
+      foreach (Dictionary<string, object> tempDic in tempList)
+      {
+          int cardID = System.Convert.ToInt32(tempDic["ID"]);
+          int cardAmount = System.Convert.ToInt32(tempDic["Amount"]);
+
+          Item tempItem = new Item();
+          tempItem.m_ID = cardID;
+          tempItem.m_Amount = cardAmount;
+          result.Add(tempItem);
+      }
+
+      Game_ItemList = result;
+      return result;
+  }
+
+  public string LoadPlayerPrefsByKey(string key)
+  {
+      if (PlayerPrefs.HasKey(key)) return PlayerPrefs.GetString(key);
+      return "";
+  }
+
+  //傳入Class Item List 並儲存資料到PlayerPrefs
+  public void OnSaveItemList()
+  {
+      Dictionary<string, object> result = new Dictionary<string, object>();
+      List<Dictionary<string, object>> tempList = new List<Dictionary<string, object>>();
+
+      foreach (Item tempItem in Game_ItemList)
+      {
+          Dictionary<string, object> tempData = new Dictionary<string, object>();
+
+          tempData.Add("ID", tempItem.m_ID);
+          tempData.Add("Amount", tempItem.m_Amount);
+          tempList.Add(tempData);
+      }
+      result.Add("Data", tempList);
+      string finalData = MiniJSON.Json.Serialize(result);
+      MainManager.instance.SavePlayerPrefs("ItemList", finalData);
+  }
