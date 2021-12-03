@@ -1,0 +1,11 @@
+//透過TextMeshPro 製作UGUI上的超連結ID
+//若字串有<link="9008"> 則可得到ID 9008
+
+public TMP_Text pTextMeshPro;
+
+private void Update()
+{
+    int linkIndex = TMP_TextUtilities.FindIntersectingLink(pTextMeshPro, Input.mousePosition, null);
+    TMP_LinkInfo linkInfo = pTextMeshPro.textInfo.linkInfo[linkIndex];
+    Debug.Log("Get HyperLink ID : " + linkInfo.GetLinkID());
+}
