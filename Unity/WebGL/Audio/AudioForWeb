@@ -1,0 +1,262 @@
+//使用Web原生聲音(搭配howler.core) 並且讓Unity Editor也可以播音效
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using System.Runtime.InteropServices;
+using UnityEngine.Networking;
+
+public class AudioManager : MonoBehaviour
+{
+    public static AudioManager instance;
+    [DllImport("__Internal")]
+    private static extern int playAudio(string audioName, bool isLoop = false);
+
+    [DllImport("__Internal")]
+    private static extern void stopAudio(string audioName, int audioId = -1);
+
+    [DllImport("__Internal")]
+    private static extern void setAudioVolume(string audioName, float volume);
+
+    [DllImport("__Internal")]
+    private static extern void muteAllAudio(bool isMute);
+
+    [DllImport("__Internal")]
+    private static extern void stopAllAudio();
+
+    public int PlayAudio(string audioName, bool isLoop = false)
+    {
+        int audioId = playAudio(audioName, isLoop);
+        Debug.Log("audioId : " + audioId.ToString());
+        return audioId;
+    }
+
+    public void StopAudio(string audioName , int audioID = -1)
+    {
+#if UNITY_EDITOR
+        if(gameObject.transform.Find(audioName) != null)
+            Destroy(gameObject.transform.Find(audioName).gameObject);
+#else
+        stopAudio(audioName , audioID);
+#endif
+
+    }
+
+    public void SetAudioVolume(string audioName, float volume)
+    {
+#if UNITY_EDITOR
+        gameObject.transform.Find(audioName).gameObject.GetComponent<AudioSource>().volume = volume;
+#else
+        setAudioVolume(audioName, volume);
+#endif
+    }
+
+    public enum ESound
+    {
+        aa,
+        bb,
+        cc
+    }
+
+    //設定音軌，需要控制音效關閉時機點的，要在下方加入string
+    public enum SoundTrack
+    {
+        Normal,
+        Bgm,
+    }
+
+    //需要控制關閉音效的音軌，要設定String
+    string soundTrackBgm = "";
+    string soundNormal = "";
+
+    [Serializable]
+    public struct AudioStruct
+    {
+        public ESound eSound;
+        public AudioClip clip;
+    }
+
+    private void Awake()
+    {
+        if (instance == null) instance = this;
+    }
+
+    private void Start()
+    {
+#if UNITY_EDITOR
+        gameObject.AddComponent<AudioListener>();
+#endif
+        Refresh();
+    }
+
+    private bool myIsAudioEnable = false; //專案記得把這邊改成false
+    //是否開啟聲音
+    public bool IsAudioEnable
+    {
+        get
+        {
+            return myIsAudioEnable;
+        }
+        set
+        {
+            myIsAudioEnable = value;
+            Refresh();
+        }
+    }
+
+    //===============Call Function================
+    string path = Application.streamingAssetsPath + "/audio/";
+    //播一次音效 傳入EnumSound 如果要用不同的頻道 可以傳入SoundTrack 預設為Slot
+    public int PlaySound(ESound enumSound, SoundTrack enumSoundTrack = SoundTrack.Normal)
+    {
+        bool isLoop = false;
+        string soundName = enumSound.ToString();
+
+        switch (enumSoundTrack)
+        {
+            case SoundTrack.Bgm:
+                if(soundTrackBgm != "")
+                {
+                    StopSoundTrack(enumSoundTrack);
+                }
+                soundTrackBgm = soundName;
+                isLoop = true;
+                break;
+            default:
+                break;
+        }
+#if UNITY_EDITOR
+        StartCoroutine(IELoadExternalAudioWebRequest(soundName, enumSoundTrack , isLoop));
+        return audioNum;
+#else
+        return PlayAudio(soundName , isLoop);
+#endif
+    }
+
+    //停止音效
+    public void StopSoundTrack(SoundTrack enumSoundTrack)
+    {
+        switch (enumSoundTrack)
+        {
+            case SoundTrack.Bgm:
+                if (soundTrackBgm == "") return;
+                StopAudio(soundTrackBgm);
+                soundTrackBgm = "";
+                break;
+            default:
+                break;
+        }
+    }
+
+    //BGM調整音量(例如freegame得大獎 壓低bgm聲音)
+    public void ChangeBGMVolume(SoundTrack enumSoundTrack , float volume)
+    {
+        SetAudioVolume(soundTrackBgm , volume);
+    }
+
+    //關閉所有聲音
+    public void StopAllAudio()
+    {
+#if UNITY_EDITOR
+        foreach (Transform child in transform)
+        {
+            GameObject.Destroy(child.gameObject);
+        }
+#else
+        stopAllAudio();
+#endif
+
+    }
+    //===============Call Function End================
+
+    private void Refresh()
+    {
+#if UNITY_EDITOR
+        if (IsAudioEnable)
+        {
+            AudioListener.volume = 1;
+        }
+        else
+        {
+            AudioListener.volume = 0;
+        }
+#else
+        if (IsAudioEnable)
+        {
+
+            muteAllAudio(false);
+        }
+        else
+        {
+            muteAllAudio(true);
+        }
+#endif
+    }
+
+    //Editor 用來播音效用
+    int audioNum = 0;
+    private IEnumerator IELoadExternalAudioWebRequest(string _name, SoundTrack enumSoundTrack, bool isLoop)
+    {
+        audioNum += 1;
+        string url = path + _name;
+        string soundFormat = ".mp3";
+        AudioType mainAudioType = AudioType.MPEG;
+
+        UnityWebRequest _unityWebRequest = UnityWebRequestMultimedia.GetAudioClip(url + soundFormat, mainAudioType);
+        yield return _unityWebRequest.SendWebRequest();
+        if (_unityWebRequest.isHttpError || _unityWebRequest.isNetworkError)
+        {
+            Debug.LogWarning("Audio not found : " + _name);
+        }
+        else
+        {
+            AudioClip _audioClip = DownloadHandlerAudioClip.GetContent(_unityWebRequest);
+            GameObject go = new GameObject();
+            go.name = _name;
+            go.transform.parent = gameObject.transform;
+            if (!isLoop)
+            {
+                Destroy(go, 10);
+            }
+            AudioSource _audioSource = go.AddComponent<AudioSource>() as AudioSource;
+            _audioSource.clip = _audioClip;
+            _audioSource.loop = isLoop;
+            _audioSource.Play();
+        }
+    }
+
+    //將Enum轉成Json 再將txt放入streaming Asset讀取
+    private void ChangeEnumToJson()
+    {
+        string[] PieceTypeNames = System.Enum.GetNames(typeof(ESound));
+        List<SoundSrc> tempList = new List<SoundSrc>();
+
+        for (int i = 0; i < PieceTypeNames.Length; i++)
+        {
+            SoundSrc temp = new SoundSrc();
+            temp.name = PieceTypeNames[i];
+            temp.src = "StreamingAssets/audio/" + temp.name + ".mp3";
+            tempList.Add(temp);
+        }
+
+        SoundSrcList tempSoundSrcList = new SoundSrcList();
+        tempSoundSrcList.MainList = tempList;
+
+        string json = JsonUtility.ToJson(tempSoundSrcList);
+        Debug.Log(json);
+    }
+}
+
+[System.Serializable]
+public class SoundSrc
+{
+    public string name;
+    public string src;
+}
+
+[System.Serializable]
+public class SoundSrcList
+{
+    public List<SoundSrc> MainList;
+}
