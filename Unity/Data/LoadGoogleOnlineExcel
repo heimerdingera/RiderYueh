@@ -45,7 +45,6 @@ public class GoogleSheetLoader : MonoBehaviour
         }
         else
         {
-            Debug.Log("===============Done!!============");
             StartCoroutine(ProcessData(data, AfterProcessData));
         }
     }
@@ -55,10 +54,9 @@ public class GoogleSheetLoader : MonoBehaviour
         Debug.Log("Process Data Done!!");
     }
 
+    //各自設定喜歡的解碼方式 範例●
     public IEnumerator ProcessData(string data, System.Action<string> onCompleted)
     {
-        yield return new WaitForEndOfFrame();
-        yield return new WaitForEndOfFrame();
         yield return new WaitForEndOfFrame();
 
         //移除r n，●用來判斷換行

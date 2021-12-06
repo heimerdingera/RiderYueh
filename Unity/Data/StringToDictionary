@@ -1,4 +1,4 @@
-//讀取某個字串Dictionary 並回傳Class List
+//讀取某個字串Dictionary 並回傳Class List或是Interface 簡單範例背包
   public List<Item> OnLoadItemList()
   {
       List<Item> result = new List<Item>();

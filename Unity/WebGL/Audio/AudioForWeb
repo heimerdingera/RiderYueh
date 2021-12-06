@@ -105,7 +105,7 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    //===============Call Function================
+
     string path = Application.streamingAssetsPath + "/audio/";
     //播一次音效 傳入EnumSound 如果要用不同的頻道 可以傳入SoundTrack 預設為Slot
     public int PlaySound(ESound enumSound, SoundTrack enumSoundTrack = SoundTrack.Normal)
@@ -168,7 +168,7 @@ public class AudioManager : MonoBehaviour
 #endif
 
     }
-    //===============Call Function End================
+
 
     private void Refresh()
     {
