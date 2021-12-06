@@ -1,0 +1,15 @@
+//簡單寫事件中心 額外判斷可以再新增
+public class EventCenter
+{
+    Dictionary<string, UnityAction> eventDic = new Dictionary<string, UnityAction>();
+
+    public void Add(string name , UnityAction ua)
+    {
+        eventDic.Add(name , ua);
+    }
+
+    public void On(string name)
+    {
+        eventDic[name].Invoke();
+    }
+}

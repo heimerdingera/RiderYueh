@@ -1,0 +1,98 @@
+
+//Unity UI Event 簡單Override
+public class OverridePointerEvent : EventTrigger
+{
+    public override void OnBeginDrag(PointerEventData data)
+    {
+        
+    }
+
+    public override void OnCancel(BaseEventData data)
+    {
+        
+    }
+
+    public override void OnDeselect(BaseEventData data)
+    {
+        
+    }
+
+    public override void OnDrag(PointerEventData data)
+    {
+        
+    }
+
+    public override void OnDrop(PointerEventData data)
+    {
+        
+    }
+
+    public override void OnEndDrag(PointerEventData data)
+    {
+        
+    }
+
+    public override void OnInitializePotentialDrag(PointerEventData data)
+    {
+        
+    }
+
+    public override void OnMove(AxisEventData data)
+    {
+        
+    }
+
+    public override void OnPointerClick(PointerEventData data)
+    {
+        if (data.button == PointerEventData.InputButton.Left)
+        {
+            base.OnPointerClick(data);
+        }
+    }
+
+    public override void OnPointerDown(PointerEventData data)
+    {
+        if (data.button == PointerEventData.InputButton.Left)
+        {
+            base.OnPointerDown(data);
+        }
+    }
+
+    public override void OnPointerEnter(PointerEventData data)
+    {
+        
+    }
+
+    public override void OnPointerExit(PointerEventData data)
+    {
+        
+    }
+
+    public override void OnPointerUp(PointerEventData data)
+    {
+        if (data.button == PointerEventData.InputButton.Left)
+        {
+            base.OnPointerUp(data);
+        }
+    }
+
+    public override void OnScroll(PointerEventData data)
+    {
+        
+    }
+
+    public override void OnSelect(BaseEventData data)
+    {
+        
+    }
+
+    public override void OnSubmit(BaseEventData data)
+    {
+        
+    }
+
+    public override void OnUpdateSelected(BaseEventData data)
+    {
+        
+    }
+}
